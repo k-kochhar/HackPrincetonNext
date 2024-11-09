@@ -40,3 +40,21 @@ h1 {
   animation: fadeIn 0.5s ease-in;
 }
 
+.wave-bg {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 130px;
+  background-color: #f3f4f6; /* Adjust to match your desired background */
+  clip-path: ellipse(50% 40% at 0% 50%);
+}
+
+.wave-bg-1 {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100px;
+  background-color: #f3f4f6; /* Adjust to match your desired background */
+  clip-path: ellipse(100% 100% at 50% 100%);
+}
+
