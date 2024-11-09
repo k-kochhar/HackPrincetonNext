@@ -21,6 +21,13 @@ export default function Chat() {
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center bg-white justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 text-black font-[family-name:var(--font-geist-sans)] fade-in">
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Background Blur Images */}
+        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 opacity-30 rounded-full blur-3xl"></div>
+        <div className="absolute top-40 right-20 w-96 h-96 bg-purple-500 opacity-40 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-40 w-80 h-80 bg-pink-500 opacity-25 rounded-full blur-3xl"></div>
+      </div>
+      
       <header className="row-start-1 flex gap-6 flex-wrap items-center justify-center">
       {/* / */}
 
@@ -93,48 +100,49 @@ export default function Chat() {
         <h1 className="text-xl">Stop Recording</h1>
       </div>
         
-        <div className="bg-gray-800 rounded-lg shadow-lg w-full max-w-md flex flex-col h-[500px] overflow-hidden">
-          {/* Chat Window */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.sender === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`p-3 rounded-lg ${
-                    message.sender === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-white"
-                  }`}
-                >
-                  {message.text}
+            <div className="relative z-10">
+                <div className="bg-gray-800 rounded-lg shadow-lg w-full max-w-md flex flex-col h-[500px] overflow-hidden">
+                {/* Chat Window */}
+                <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                    {messages.map((message, index) => (
+                    <div
+                        key={index}
+                        className={`flex ${
+                        message.sender === "user" ? "justify-end" : "justify-start"
+                        }`}
+                    >
+                        <div
+                        className={`p-3 rounded-lg ${
+                            message.sender === "user"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 text-white"
+                        }`}
+                        >
+                        {message.text}
+                        </div>
+                    </div>
+                    ))}
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 bg-gray-700">
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                className="flex-1 p-2 rounded bg-gray-800 text-white focus:outline-none"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              />
-              <button
-                onClick={handleSend}
-                className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
-              >
-                Send
-              </button>
+                {/* Input Area */}
+                <div className="p-4 bg-gray-700">
+                    <div className="flex space-x-2">
+                        <input
+                            type="text"
+                            placeholder="Type a message..."
+                            className="flex-1 p-2 rounded bg-gray-800 text-white focus:outline-none"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        />
+                        <button
+                            onClick={handleSend}
+                            className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
       </main>
     </div>
