@@ -21,10 +21,10 @@ const Header = () => {
         </nav>
       </div>
       <div className="flex gap-6 self-start mt-2 text-base">
-        <Link href="/login" className="gap-2.5 self-stretch px-6 py-4 whitespace-nowrap bg-white rounded-xl text-stone-900 max-md:px-5">
+        <Link href="/" className="gap-2.5 self-stretch px-6 py-4 whitespace-nowrap bg-white rounded-xl text-stone-900 max-md:px-5">
           Login
         </Link>
-        <Link href="/lecture" className="gap-2.5 self-stretch px-6 py-4 text-white bg-cyan-700 rounded-xl max-md:px-5">
+        <Link href="/lecture" className="gap-2.5 self-stretch px-6 py-4 pr-2500 text-white bg-cyan-700 rounded-xl max-md:px-5">
           Get Started
         </Link>
       </div>

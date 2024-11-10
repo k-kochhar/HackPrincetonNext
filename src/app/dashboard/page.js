@@ -9,11 +9,11 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 p-4 fade-in">
       {/* Top Navigation */}
-      <header className="flex justify-between items-center mb-8">
+      <header className="flex relative flex-col items-start px-14 pt-4 pb-96 w-full max-md:px-5 max-md:pb-24 max-md:max-w-full">
         <Header />
         <div className="flex items-center space-x-6">
           {/* Stats */}
-          <div className="flex items-center space-x-1">
+          <div className="flex pl-8 items-center space-x-1">
             <Image src="/coin.png" alt="dollar" width={24} height={24} />
             <span className="text-black">500</span>
           </div>

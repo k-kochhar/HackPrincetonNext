@@ -68,7 +68,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-200 p-8 fade-in">
+    <div className="flex flex-col items-center min-h-screen bg-gray-200 p-8 fade-in justify-between mb-8">
       {/* Navbar */}
         <Header />
 
