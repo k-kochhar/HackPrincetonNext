@@ -9,7 +9,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 p-4 fade-in">
       {/* Top Navigation */}
-      <header className="flex relative flex-col items-start px-14 pt-4 pb-96 w-full max-md:px-5 max-md:pb-24 max-md:max-w-full">
+      <header className="flex relative flex-col items-start px-14 pt-4 pb-10 w-full max-md:px-5 max-md:pb-24 max-md:max-w-full">
         <Header />
         <div className="flex items-center space-x-6">
           {/* Stats */}
