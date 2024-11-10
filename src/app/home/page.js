@@ -1,6 +1,6 @@
 import React from 'react';
-import Header from '../component/landing/Header';
-import HeroSection from '../component/landing/Hero';
+import Header from '@/app/components/landing/Header';
+import HeroSection from '@/app/components/landing/Hero';
 
 const PigeonPostPage = () => {
   return (

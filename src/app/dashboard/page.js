@@ -1,7 +1,7 @@
 // src/app/dashboard/page.js
 import Image from 'next/image';
 import Link from 'next/link';
-import Header from "../component/landing/Header";
+import Header from "@/app/components/landing/Header";
 
 
 

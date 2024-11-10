@@ -1,176 +1,274 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import Header from "../component/landing/Header";
+import {useState, useEffect, useRef} from 'react'
+import {Dialog, DialogBackdrop, DialogPanel, TransitionChild} from '@headlessui/react'
+import {
+    Bars3Icon, CalendarIcon, ChartPieIcon, DocumentDuplicateIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon,
+} from '@heroicons/react/24/outline'
+import Header from '../components/lecture/Header'
+import PlayButton from '../components/lecture/Playbutton'
+import PauseButton from '../components/lecture/PauseButton'
 
 
+export default function Lecture() {
 
-export default function Chat() {
-  const [messages, setMessages] = useState([
-    { text: "Hello, ask any questions about this lecture!", sender: "bot" },
-  ]);
-  const [input, setInput] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [displayedTime, setDisplayedTime] = useState(0);
-  const [showModal, setShowModal] = useState(false); // State to control the modal visibility
-  const [transcriptLabel, setTranscriptLabel] = useState(""); // State to store the transcript label
-  const [suggestionsVisible, setSuggestionsVisible] = useState(true); // To toggle visibility of suggestions
+    const [isRecording, setIsRecording] = useState(false)
+    const [finalTranscript, setFinalTranscript] = useState('')
+    const [interimTranscript, setInterimTranscript] = useState('')
+    const recognitionRef = useRef(null)
+    const lastSpeechTimeRef = useRef(Date.now())
+    const silenceTimeoutRef = useRef(null)
+    const [question, setQuestion] = useState('')
+    const [messages, setMessages] = useState([])
 
-  const suggestions = ["Make me a quiz", "Summarize key points", "List vocabulary terms"];
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+            const {webkitSpeechRecognition} = window;
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
 
-  // Timer functionality
-  useEffect(() => {
-    let interval;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev + 1);
-        setDisplayedTime((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
+            recognition.onresult = (event) => {
+                // Update the last speech time
+                lastSpeechTimeRef.current = Date.now();
+
+                // Clear any existing silence timeout
+                if (silenceTimeoutRef.current) {
+                    clearTimeout(silenceTimeoutRef.current);
+                }
+
+                // Get the current result
+                const result = event.results[event.results.length - 1];
+
+                if (result.isFinal) {
+                    // If it's a final result, update the final transcript
+                    let updatedTranscript = capitalizeFirstLetter(result[0].transcript + ". ");
+                    setFinalTranscript(prevTranscript => {
+                        // Ensure the entire transcript is properly formatted
+                        return capitalizeFirstLetter(prevTranscript + updatedTranscript);
+                    });
+                    setInterimTranscript('');
+                    console.log('Most Recent Chunk:', result[0].transcript.trim() + ".");
+                    postChunk(result[0].transcript.trim() + ".");
+                } else {
+                    // If it's an interim result, show it while keeping the final transcript
+                    setInterimTranscript(result[0].transcript);
+                }
+
+                // Set up silence detection
+                silenceTimeoutRef.current = setTimeout(() => {
+                    if (Date.now() - lastSpeechTimeRef.current >= 1000) {
+                        // Only clear the interim transcript after silence
+                        setInterimTranscript('');
+                    }
+                }, 1000);
+            };
+
+            recognition.onend = () => {
+                if (isRecording) {
+                    recognition.start();
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.log('Speech recognition error:', event.error);
+                if (event.error === 'no-speech' && isRecording) {
+                    setInterimTranscript('');
+                    recognition.stop();
+                    recognition.start();
+                }
+            };
+
+            recognitionRef.current = recognition;
+        }
+
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+            }
+        };
+    }, [isRecording]);
+
+    const startRecording = () => {
+        if (recognitionRef.current && !isRecording) {
+            lastSpeechTimeRef.current = Date.now();
+            setFinalTranscript('');
+            setInterimTranscript('');
+            recognitionRef.current.start();
+            setIsRecording(true);
+        }
+    };
+
+    function capitalizeFirstLetter(text) {
+        return text.replace(/(?:^|\.\s*)([a-z])/g, (match, firstLetter) => {
+            return match.replace(firstLetter, firstLetter.toUpperCase());
+        });
     }
-    return () => clearInterval(interval);
-  }, [isRecording]);
 
-  const handleSend = (messageText = input) => {
-    if (messageText.trim()) {
-      setMessages([...messages, { text: messageText, sender: "user" }]);
-      setInput("");
-      setSuggestionsVisible(false); // Hide suggestions after any message is sent
+    const stopRecording = () => {
+        if (recognitionRef.current && isRecording) {
+            recognitionRef.current.stop();
+            setIsRecording(false);
+            setInterimTranscript('');
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+            }
+        }
+    };
+
+
+    const postChunk = async (chunk) => {
+        try {
+
+            const response = await fetch("http://127.0.0.1:3005/api/v1/add_lecture", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "course_title": "Example Course",
+                    "lecture_title": "Lecture 1",
+                    "content": chunk
+                }),
+            });
+
+            if (response.ok) {
+                console.log("Call Sent!");
+            }
+        } catch (error) {
+            alert("An unexpected error occurred.");
+        }
+    };
+
+
+    const postQuestion = async () => {
+
+        // Add the question to the list of messages
+        setMessages([...messages, {
+            text: question,
+            isUser: true,
+        }]);
+
+        try {
+            const response = await fetch("http://127.0.0.1:3005/api/v1/query", {
+                method: "POST", headers: {
+                    "Content-Type": "application/json",
+                }, body: JSON.stringify({
+                    "question": question,
+                    "course_title": "Example Course",
+                    "lecture_title": "Lecture 1",
+                    "prefer_recent": true,
+                    "limit": 5
+                }),
+            });
+
+            // Add the response to the list of messages
+            setMessages([...messages, {
+                text: response,
+                isUser: false,
+            }]);
+
+
+            if (response.ok) {
+                console.log("Call Sent!");
+            }
+        } catch (error) {
+            alert("An unexpected error occurred.");
+        }
+
     }
-  };
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      setDisplayedTime(timer);
-      setShowModal(true); // Show the modal when stopping the recording
-    } else {
-      setTimer(0);
-      setDisplayedTime(0);
-    }
-    setIsRecording((prev) => !prev);
-  };
+    return (
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-  };
+        <div className="flex flex-col h-screen overflow-hidden">
+            <Header/>
+            <main className="flex flex-1">
+                {/* Left Side */}
+                <div className="w-3/5 pl-10">
+                    <div className="px-4 py-6 h-full">
+                        <h2 className="text-[#69BBCF] text-3xl font-bold mb-6">Record your Lecture</h2>
 
-  const handleSubmit = () => {
-    setShowModal(false); // Hide the modal after submission
-    setTranscriptLabel(""); // Clear the label input
-    setTimer(0); // Reset the timer
-    setDisplayedTime(0); // Reset the displayed time
-  };
+                        <div className="p-4 border border-neutral-300 rounded-3xl h-[80%] overflow-hidden">
+                            <div className="bg-white overflow-y-auto">
 
-  return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-200 p-8 fade-in justify-between mb-8">
-      {/* Navbar */}
-        <Header />
+                                <div
+                                    className="w-full min-h-[200px] max-h-[400px] overflow-y-auto p-4">
+                                    {finalTranscript && (<div className="text-gray-900 mb-2">{finalTranscript}</div>)}
+                                    {interimTranscript && (<div className="text-gray-500">{interimTranscript}</div>)}
+                                    {!finalTranscript && !interimTranscript && 'Transcript will appear here...'}
+                                </div>
 
-      {/* Main Content */}
-      <main className="flex justify-center gap-8 w-full max-w-[1200px]">
-        {/* Left Side: Transcript Box */}
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-[85%] h-[490px] p-4">
-          <h2 className="text-black text-lg font-semibold mb-4">Live Transcript of your Recording</h2>
-          <div className="text-black italic">Transcript will appear here...</div>
-        </div>
+                            </div>
+                        </div>
 
-        {/* Right Side: Chatbox */}
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-[85%] h-[490px] flex flex-col">
-          <div className="flex-1 p-4 overflow-y-auto space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`p-3 rounded-lg ${message.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-600 text-white"}`}
-                >
-                  {message.text}
+                        <div className="grid grid-cols-6 mt-5 ">
+
+                            {/* Text Input Area */}
+                            <div className="p-6 border-neutral-300 rounded-3xl  col-span-5  overflow-hidden">
+                                <div className="bg-white">
+
+                                </div>
+                            </div>
+
+                            <div className="flex col-span-1 justify-end">
+                                {!isRecording ? (<button
+                                    onClick={startRecording}
+                                    disabled={isRecording}
+                                >
+                                    <PlayButton/>
+                                </button>) : (<button
+                                    onClick={stopRecording}
+                                    disabled={!isRecording}
+                                >
+                                    <PauseButton/>
+                                </button>)}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            ))}
 
-            {/* Suggested Messages */}
-            {suggestionsVisible && (
-              <div className="space-y-2 mt-4">
-                <h3 className="text-gray-500">Suggestions</h3>
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSend(suggestion)}
-                    className="block w-full text-left p-2 border border-dashed border-gray-400 rounded-lg text-gray-600 hover:bg-gray-100"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                {/* Right Side */}
+                <div className="w-2/5 pr-10">
+                    <div className="px-4 py-6 h-full">
 
-          {/* Input Area */}
-          <div className="p-3 bg-gray-500">
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                className="flex-1 p-2 rounded bg-gray-600 text-white focus:outline-none"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && input.trim()) {
-                    handleSend(input);
-                  }
-                }}
-              />
-              <button
-                onClick={() => handleSend(input)}
-                className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-700"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
+                        <h3 className="text-[#69BBCF] text-3xl font-bold mb-6">Ask</h3>
 
-      {/* Bottom Timer and Start/Stop Button */}
-      <div className="mt-8 flex items-center space-x-4">
-        <button
-          onClick={toggleRecording}
-          className={`px-4 py-2 rounded ${isRecording ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"} text-white font-semibold`}
-        >
-          {isRecording ? "Stop Recording" : "Start Recording"}
-        </button>
-        <div className="text-xl text-black font-semibold">{formatTime(displayedTime)}</div>
-      </div>
+                        <div className="p-4 border border-neutral-300 rounded-3xl h-[80%] overflow-hidden">
+                            {/* This is where the Chat will be */}
+                            <div className="bg-white overflow-y-auto h-full p-4 space-y-2">
+                                {messages.map((msg, index) => (
+                                    <div key={index} className={`flex p-2 rounded-lg ${msg.isUser ? 'bg-blue-200 justify-end pr-6' : 'bg-green-200 justify-start pl-6'} text-neutral-600`}>
+                                        {msg.text}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-      {/* Modal Popup */}
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-md">
-            <h2 className="text-lg text-black font-semibold mb-4">Label Your Lecture Transcript</h2>
-            <input
-              type="text"
-              placeholder="Enter lecture title..."
-              className="w-full p-2 border rounded mb-4"
-              value={transcriptLabel}
-              onChange={(e) => setTranscriptLabel(e.target.value)}
-            />
-            <button
-              onClick={handleSubmit}
-              className="w-full px-4 py-2 bg-blue-500 rounded text-white hover:bg-blue-700"
-            >
-              Submit to Dashboard
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+                        <div className="grid grid-cols-6">
+                            {/* Text Input Area */}
+                                 <textarea
+                                     className="text-neutral-600 w-full p-3 bg-white mt-5 border border-neutral-300 rounded-3xl col-span-5 overflow-hidden"
+                                     placeholder="Ask a Question!"
+                                     value={question}
+                                     onChange={(e) => setQuestion(e.target.value)}
+                                 >
+                                </textarea>
+                                <div className="flex col-span-1 justify-end">
+                                    <button
+                                        onClick={postQuestion}
+                                        disabled={!question}
+                                    >
+                                        <DocumentDuplicateIcon className="h-8 w-8 text-[#69BBCF]"/>
+                                    </button>
+
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>)
 }
