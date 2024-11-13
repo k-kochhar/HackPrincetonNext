@@ -15,7 +15,7 @@ export default function Navbar() {
                         </div>
                         <div className=" sm:ml-6 sm:flex sm:space-x-8">
                             {/* Navigation links */}
-                            <a href="/"
+                            <a href="/home"
                                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-xl font-medium">
                                 Home
                             </a>
@@ -30,15 +30,13 @@ export default function Navbar() {
                         </div>
                     </div>
 
-                    <div className="flex items-center border justify-end">
-                        <a href="/login"
-                           className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                            Log In
-                        </a>
-                        <a href="/signup"
-                           className="bg-blue-500 text-white hover:bg-blue-600 px-3 py-2 rounded-md text-sm font-medium">
-                            Get Started
-                        </a>
+                    <div className="flex items-center justify-end">
+                        <img
+                            loading="lazy"
+                            src="/ProfilePicture.png"
+                            alt="Profile Picture"
+                            className="object-contain shrink-0 rounded-none aspect-[1.07] w-[65px]"
+                        />
                     </div>
                 </div>
             </div>

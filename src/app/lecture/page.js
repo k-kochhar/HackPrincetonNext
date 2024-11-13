@@ -1,6 +1,6 @@
 'use client'
 
-import {useState, useEffect, useRef} from 'react'
+import React, {useState, useEffect, useRef} from 'react'
 import {Dialog, DialogBackdrop, DialogPanel, TransitionChild} from '@headlessui/react'
 import {
     Bars3Icon, CalendarIcon, ChartPieIcon, DocumentDuplicateIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon,
@@ -20,6 +20,7 @@ export default function Lecture() {
     const silenceTimeoutRef = useRef(null)
     const [question, setQuestion] = useState('')
     const [messages, setMessages] = useState([])
+    const address = 'http://172.20.10.3:5000'
 
     useEffect(() => {
         if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
@@ -123,14 +124,14 @@ export default function Lecture() {
 
     const postChunk = async (chunk) => {
         try {
-
-            const response = await fetch("http://127.0.0.1:3005/api/v1/add_lecture", {
+            console.log("Attemping to send chunk, ")
+            const response = await fetch("http://172.20.10.3:5000/api/v1/add_lecture", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    "course_title": "Example Course",
+                    "course_title": "Presentation Uno",
                     "lecture_title": "Lecture 1",
                     "content": chunk
                 }),
@@ -140,7 +141,7 @@ export default function Lecture() {
                 console.log("Call Sent!");
             }
         } catch (error) {
-            alert("An unexpected error occurred.");
+            console.log("Error")
         }
     };
 
@@ -154,30 +155,31 @@ export default function Lecture() {
         }]);
 
         try {
-            const response = await fetch("http://127.0.0.1:3005/api/v1/query", {
+            const response = await fetch("http://172.20.10.3:5000/api/v1/query", {
                 method: "POST", headers: {
                     "Content-Type": "application/json",
                 }, body: JSON.stringify({
                     "question": question,
-                    "course_title": "Example Course",
+                    "course_title": "Presentation Uno",
                     "lecture_title": "Lecture 1",
                     "prefer_recent": true,
-                    "limit": 5
+                    "limit": 10
                 }),
             });
 
             // Add the response to the list of messages
-            setMessages([...messages, {
-                text: response,
-                isUser: false,
-            }]);
-
-
             if (response.ok) {
+                const data = await response.json(); // Parse the response JSON
+                setMessages((prevMessages) => [
+                    ...prevMessages,
+                    { text: data.answer, isUser: false }, // Use the parsed data here
+                ]);
                 console.log("Call Sent!");
+            } else {
+                console.error("Failed to get a response");
             }
         } catch (error) {
-            alert("An unexpected error occurred.");
+            console.log("Error")
         }
 
     }
@@ -262,7 +264,12 @@ export default function Lecture() {
                                         onClick={postQuestion}
                                         disabled={!question}
                                     >
-                                        <DocumentDuplicateIcon className="h-8 w-8 text-[#69BBCF]"/>
+                                        <img
+                                            loading="lazy"
+                                            src="/Upload.png"
+                                            alt="Upload"
+                                            className="object-contain pt-8 shrink-0 rounded-none aspect-[1.07] w-[100px]"
+                                        />
                                     </button>
 
                                 </div>
