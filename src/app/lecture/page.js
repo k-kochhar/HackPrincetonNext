@@ -1,10 +1,6 @@
 'use client'
 
 import React, {useState, useEffect, useRef} from 'react'
-import {Dialog, DialogBackdrop, DialogPanel, TransitionChild} from '@headlessui/react'
-import {
-    Bars3Icon, CalendarIcon, ChartPieIcon, DocumentDuplicateIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon,
-} from '@heroicons/react/24/outline'
 import Header from '../components/lecture/Header'
 import PlayButton from '../components/lecture/Playbutton'
 import PauseButton from '../components/lecture/PauseButton'
